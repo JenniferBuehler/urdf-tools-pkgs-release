@@ -2,6 +2,11 @@
 Changelog for package urdf_viewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.3 (2016-06-04)
+------------------
+* Fixed small error in urdf_viewer CMakeLists
+* Contributors: Jennifer Buehler
+
 0.0.1 (2016-05-31)
 ------------------
 * Now exports textures to file for individual meshes, working on getting it to work with overall robot
