@@ -2,6 +2,9 @@
 Changelog for package urdf_traverser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.3 (2016-06-04)
+------------------
+
 0.0.1 (2016-05-31)
 ------------------
 * urdf2inventor now copies textures for the whole model as well
