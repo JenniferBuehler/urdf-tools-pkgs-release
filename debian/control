@@ -1,0 +1,12 @@
+Source: ros-indigo-urdf-tools
+Section: misc
+Priority: extra
+Maintainer: Jennifer Buehler <jennifer.e.buehler@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-indigo-catkin
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-indigo-urdf-tools
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-indigo-urdf-transform, ros-indigo-urdf-traverser, ros-indigo-urdf-viewer, ros-indigo-urdf2inventor
+Description: A collection of tools to traverse, view and manipulate a URDF
