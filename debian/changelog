@@ -1,0 +1,35 @@
+ros-indigo-urdf2inventor (1.0.0-0saucy) saucy; urgency=high
+
+  * Added missing installation of hpp files
+  * Added installation of launch files
+  * Contributors: Jennifer Buehler
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Mon, 06 Jun 2016 22:00:00 -0000
+
+ros-indigo-urdf2inventor (0.0.4-0saucy) saucy; urgency=high
+
+  * Fixed export depending system libs in cmakelists
+  * Contributors: Jennifer Buehler
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Sun, 05 Jun 2016 22:00:00 -0000
+
+ros-indigo-urdf2inventor (0.0.3-0saucy) saucy; urgency=high
+
+
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Fri, 03 Jun 2016 22:00:00 -0000
+
+ros-indigo-urdf2inventor (0.0.1-0saucy) saucy; urgency=high
+
+  * urdf2inventor now copies textures for the whole model as well
+  * Now exports textures to file for individual meshes, working on getting it to work with overall robot
+  * Fixed but in loading non-existing materials; Now also can load textures;
+  * Now can use material from URDF too
+  * Fixed error in scaling after transforming from assimp
+  * urdf2inventor now works with assimp
+  * Added urdf2inventor and urdf_viewer
+  * Contributors: Jennifer Buehler
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Mon, 30 May 2016 22:00:00 -0000
+
+
