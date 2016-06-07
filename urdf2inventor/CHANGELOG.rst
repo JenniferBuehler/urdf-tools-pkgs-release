@@ -2,6 +2,12 @@
 Changelog for package urdf2inventor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.0 (2016-06-07)
+------------------
+* Added missing installation of hpp files
+* Added installation of launch files
+* Contributors: Jennifer Buehler
+
 0.0.4 (2016-06-06)
 ------------------
 * Fixed export depending system libs in cmakelists
