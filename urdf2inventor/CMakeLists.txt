@@ -136,15 +136,24 @@ install(TARGETS urdf2inventor urdf2inventor_node
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
    FILES_MATCHING PATTERN "*.h"
 )
 
+install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.hpp"
+)
+
 install(DIRECTORY CMakeMacros/
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cmake
     FILES_MATCHING PATTERN "*.cmake"
+)
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  FILES_MATCHING PATTERN "*.launch"
 )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
