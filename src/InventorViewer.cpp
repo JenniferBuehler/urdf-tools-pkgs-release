@@ -1,21 +1,33 @@
 /**
-    Copyright (C) 2016 Jennifer Buehler
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software Foundation,
-    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-**/
-
+ * <ORGANIZATION> = Jennifer Buehler 
+ * <COPYRIGHT HOLDER> = Jennifer Buehler 
+ * 
+ * Copyright (c) 2016 Jennifer Buehler 
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the <ORGANIZATION> nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ------------------------------------------------------------------------------
+ **/
 #include <urdf_viewer/InventorViewer.h>
 #include <urdf2inventor/Helpers.h>
 
@@ -30,7 +42,7 @@
 #include <Inventor/nodes/SoCone.h>
 #include <Inventor/nodes/SoSphere.h>
 #include <Inventor/nodes/SoCoordinate3.h>
-#include <Inventor/nodes/SoVertexShape.h>
+#include <Inventor/nodes/SoIndexedShape.h>
 #include <Inventor/nodes/SoVertexProperty.h>
 #include <Inventor/actions/SoSearchAction.h>
 #include <Inventor/details/SoFaceDetail.h>
@@ -66,7 +78,7 @@ InventorViewer::~InventorViewer()
 }
 
 
-void InventorViewer::init(const char * windowName)
+void InventorViewer::init(const char * windowName, float bck_r, float bck_g, float bck_b)
 {
     if (viewWindow)
     {
@@ -75,6 +87,7 @@ void InventorViewer::init(const char * windowName)
     }
     viewWindow = SoQt::init(windowName);
     viewer = new SoQtExaminerViewer(viewWindow);
+    viewer->setBackgroundColor(SbColor(bck_r,bck_g,bck_b));
     root = new SoSelection();
     root->ref();
 
@@ -113,7 +126,18 @@ void InventorViewer::runViewer()
     SoQt::mainLoop();
 }
 
-bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool ccw_face, Eigen::Vector3d& normal)
+
+void printPath(const SoPath* p)
+{
+    for (int i = p->getLength() - 1; i >= 0;  --i)
+    {
+        SoNode * n = p->getNode(i);
+        std::string name = n->getName().getString();
+        ROS_INFO("Path[%i]: %s, type %s",i,name.c_str(),n->getTypeId().getName().getString());
+    }
+}
+
+bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool ccw_face, Eigen::Vector3d& normal, int& shapeIdx)
 {
     const SoDetail *pickDetail = pick->getDetail();
     if ((pickDetail != NULL) && (pickDetail->getTypeId() == SoFaceDetail::getClassTypeId()))
@@ -127,25 +151,35 @@ bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool c
         }
 
         // face index is always 0 with triangle strips
-        // ROS_INFO_STREAM("Face index: "<<fd->getFaceIndex());
-
-        SbVec3f pickNormal = pick->getNormal();
-        //SbVec3f _normalObj=pick->getObjectNormal();
-        float _x, _y, _z;
-        pickNormal.getValue(_x, _y, _z);
-        Eigen::Vector3d normalDef = Eigen::Vector3d(_x, _y, _z);
-        normal = normalDef;
-
-        // ROS_INFO_STREAM("Clicked on face with "<<fd->getNumPoints()<<" points.");
+       // ROS_INFO_STREAM("Face index: "<<fd->getFaceIndex());
 
         if (fd->getNumPoints() < 3)
         {
             ROS_ERROR("Clicked on degenerate face, can't compute normal");
             return false;
         }
+        /*else
+        {
+            ROS_INFO_STREAM("Clicked on face with "<<fd->getNumPoints()<<" points.");
+        }*/       
+        
+        //ROS_INFO("Pick path:");
+        //printPath(pick->getPath());
+
+        /*SbVec3f pickNormal = pick->getNormal();
+        //SbVec3f _normalObj=pick->getObjectNormal();
+        float _x, _y, _z;
+        pickNormal.getValue(_x, _y, _z);
+        Eigen::Vector3d normalDef = Eigen::Vector3d(_x, _y, _z);
+        normal = normalDef;*/
+
+        // ROS_INFO_STREAM("Clicked on face with "<<fd->getNumPoints()<<" points.");
+
         int p1 = fd->getPoint(0)->getCoordinateIndex();
         int p2 = fd->getPoint(1)->getCoordinateIndex();
         int p3 = fd->getPoint(2)->getCoordinateIndex();
+
+        // ROS_INFO_STREAM("Face part index: "<<fd->getPartIndex());
 
         // ROS_INFO_STREAM("First 3 coord indices: "<<p1<<", "<<p2<<", "<<p3);
 
@@ -159,12 +193,15 @@ bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool c
 
         SbVec3f coord1, coord2, coord3;
 
+        shapeIdx=pick->getPath()->getLength()-1;
+        //ROS_INFO_STREAM("Len of pick path: "<<shapeIdx);
+
         if (searchCoords.getPath() == NULL)
         {
-            // try to find SoVertexShape instead
-            //ROS_INFO("No SoCoordinate3 node found, looking for SoVertexShape...");
+            // try to find SoIndexedShape instead
+            // ROS_INFO("No SoCoordinate3 node found, looking for SoIndexedShape...");
 
-            searchCoords.setType(SoVertexShape::getClassTypeId());
+            searchCoords.setType(SoIndexedShape::getClassTypeId());
             searchCoords.setInterest(SoSearchAction::LAST);
             searchCoords.apply(pick->getPath());
 
@@ -173,10 +210,17 @@ bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool c
                 ROS_ERROR("Failed to find coordinate node for the picked face. Returning default normal.");
                 return false;
             }
-            SoVertexShape * vShapeNode = dynamic_cast<SoVertexShape*>(searchCoords.getPath()->getTail());
+
+            shapeIdx=searchCoords.getPath()->getLength()-1;
+            // ROS_INFO_STREAM("Coords at Idx: "<<shapeIdx);
+
+            // ROS_INFO("SearchCoords path:");
+            // printPath(searchCoords.getPath());
+
+            SoIndexedShape * vShapeNode = dynamic_cast<SoIndexedShape*>(searchCoords.getPath()->getTail());
             if (!vShapeNode)
             {
-                ROS_ERROR("Could not cast SoVertexShape");
+                ROS_ERROR("Could not cast SoIndexedShape");
                 return false;
             }
             SoVertexProperty * vProp = dynamic_cast<SoVertexProperty*>(vShapeNode->vertexProperty.getValue());
@@ -191,6 +235,8 @@ bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool c
         }
         else
         {
+            shapeIdx=searchCoords.getPath()->getLength()-1;
+            
             SoCoordinate3 * coordNode = dynamic_cast<SoCoordinate3*>(searchCoords.getPath()->getTail());
             if (!coordNode)
             {
@@ -208,6 +254,14 @@ bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool c
                             " points is not a triangle and may lead to wrong normal calculations.");
         }
 
+        /*ROS_INFO_STREAM("Coords "<<p1<<", "<<p2<<", "<<p3);
+        float _x, _y, _z;
+        coord1.getValue(_x, _y, _z);
+        ROS_INFO_STREAM("val1 "<<_x<<", "<<_y<<", "<<_z);
+        coord2.getValue(_x, _y, _z);
+        ROS_INFO_STREAM("val2 "<<_x<<", "<<_y<<", "<<_z);
+        coord3.getValue(_x, _y, _z);
+        ROS_INFO_STREAM("val3 "<<_x<<", "<<_y<<", "<<_z);*/
 
         SbVec3f diff1(coord2.getValue());
         diff1 -= coord1;
@@ -231,30 +285,23 @@ bool InventorViewer::computeCorrectFaceNormal(const SoPickedPoint * pick, bool c
 }
 
 
-
-
-
-
-/**
- * string which is used for sscanf to extract following information form an SoNode:
- * the name of the link, and the nubmer of the visual. This sscanf should get first an int (visual number), then a string (link name).
- * it should fail for all nodes except those which contain the visual mesh.
- */
-#define VISUAL_SCANF "_visual_%i_%s"
-
-SoNode * InventorViewer::getLinkDesc(const SoPath * path, std::string& linkName, int& visualNum)
+SoNode * InventorViewer::getIntStr(const std::string& sscanfStr, const SoPath * path, std::string& extStr, int& extNum, int& pathIdx)
 {
-    for (unsigned int i = path->getLength() - 1; i >= 0;  --i)
+    if (path->getLength()==0) return NULL;
+    for (int i = path->getLength() - 1; i >= 0;  --i)
     {
         SoNode * n = path->getNode(i);
         std::string name = n->getName().getString();
-        // ROS_INFO("Pick path len %s\n",name.c_str());
+        
+        //ROS_INFO("Path[%i]: %s, type %s",i,name.c_str(),n->getTypeId().getName().getString());
+
         char ln[1000];
         int num;
-        if (sscanf(name.c_str(), VISUAL_SCANF, &num, ln) < 2) continue;
+        if (sscanf(name.c_str(), sscanfStr.c_str(), &num, ln) < 2) continue;
         // ROS_INFO("num: %i rest: %s\n",num,ln);
-        linkName = ln; //urdf2inventor::helpers::getFilename(ln); // take only the name after the last '/'
-        visualNum = num;
+        extStr = ln; //urdf2inventor::helpers::getFilename(ln); // take only the name after the last '/'
+        extNum = num;
+        pathIdx = i;
         return n;
     }
     return NULL;
@@ -291,7 +338,7 @@ void InventorViewer::mouseBtnCB(void *userData, SoEventCallback *_pEvent)
             obj->onClickModel(pPickedPt);
 
             // see if a URDF link was clicked:
-            SoPath *pPickPath = pPickedPt->getPath();
+            /*SoPath *pPickPath = pPickedPt->getPath();
             std::string linkName;
             int visualNum;
             SoNode * linkNode = getLinkDesc(pPickPath, linkName, visualNum);
@@ -302,7 +349,7 @@ void InventorViewer::mouseBtnCB(void *userData, SoEventCallback *_pEvent)
             }
             float x, y, z;
             pPickedPt->getObjectPoint(linkNode).getValue(x, y, z);
-            ROS_INFO_STREAM("Clicked on " << linkName << ", at pos " << x << ", " << y << ", " << z);
+            ROS_INFO_STREAM("Clicked on " << linkName << ", at pos " << x << ", " << y << ", " << z);*/
         }
     }
 }
