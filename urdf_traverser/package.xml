@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>urdf_traverser</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>
       Urdf traverser (C++) which provides functions to traverse
       the URDF and convenience functions to access the URDF model.
@@ -14,7 +14,7 @@
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>GPLv3</license>
+  <license>BSD (3-clause)</license>
 
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
