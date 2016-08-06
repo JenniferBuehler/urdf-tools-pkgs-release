@@ -1,0 +1,42 @@
+ros-indigo-urdf-viewer (1.0.1-0trusty) trusty; urgency=high
+
+  * Changed to BSD 3-clause license
+  * Fix cylinder and box orientations
+  * Added function to compute Bounding Box
+  * Added new transform and cylinder methods to IVHelpers
+  * Supports Cylinder in urdf2inventor now
+  * Contributors: Jennifer Buehler
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Fri, 05 Aug 2016 22:00:00 -0000
+
+ros-indigo-urdf-viewer (1.0.0-0trusty) trusty; urgency=high
+
+  * Added installation of launch files
+  * Contributors: Jennifer Buehler
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Mon, 06 Jun 2016 22:00:00 -0000
+
+ros-indigo-urdf-viewer (0.0.4-0trusty) trusty; urgency=high
+
+  * Fixed export depending system libs in cmakelists
+  * Contributors: Jennifer Buehler
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Sun, 05 Jun 2016 22:00:00 -0000
+
+ros-indigo-urdf-viewer (0.0.3-0trusty) trusty; urgency=high
+
+  * Fixed small error in urdf_viewer CMakeLists
+  * Contributors: Jennifer Buehler
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Fri, 03 Jun 2016 22:00:00 -0000
+
+ros-indigo-urdf-viewer (0.0.1-0trusty) trusty; urgency=high
+
+  * Now exports textures to file for individual meshes, working on getting it to work with overall robot
+  * Fixed error in scaling after transforming from assimp
+  * Added urdf2inventor and urdf_viewer
+  * Contributors: Jennifer Buehler
+
+ -- Jennifer Buehler <jennifer.e.buehler@gmail.com>  Mon, 30 May 2016 22:00:00 -0000
+
+
