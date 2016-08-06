@@ -2,6 +2,11 @@
 Changelog for package urdf_transform
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.1 (2016-08-06)
+------------------
+* Changed to BSD 3-clause license
+* Contributors: Jennifer Buehler
+
 1.0.0 (2016-06-07)
 ------------------
 
