@@ -1,20 +1,33 @@
 /**
-    Copyright (C) 2016 Jennifer Buehler
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software Foundation,
-    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-**/
+ * <ORGANIZATION> = Jennifer Buehler 
+ * <COPYRIGHT HOLDER> = Jennifer Buehler 
+ * 
+ * Copyright (c) 2016 Jennifer Buehler 
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the <ORGANIZATION> nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ------------------------------------------------------------------------------
+ **/
 
 #ifndef URDF_VIEWER_INVENTORVIEWER_H
 #define URDF_VIEWER_INVENTORVIEWER_H
@@ -65,7 +78,7 @@ public:
      * TODO: For some reason I haven't yet further investigated, this has to be called **after**
      * functions as Urdf2Inventor::loadAndGetAsInventor(), or it won't work. Find out why, and fix it.
      */
-    void init(const char * windowName = "InventorViewer");
+    void init(const char * windowName = "InventorViewer", float bck_r=0.3, float bck_g=0.3, float bck_b=0.3);
 
     /**
      * Load a model into the viewer
@@ -92,13 +105,22 @@ protected:
 
     /**
      * Calculates the correct face normal of the pick point.
+     * \param shapeIdx output: the index in the \e pick path at which the actual shape resides. 
+     *      Normal coordinates are in the frame of this shape.
      */
-    static bool computeCorrectFaceNormal(const SoPickedPoint * pick, bool ccw_face, Eigen::Vector3d& normal);
+    static bool computeCorrectFaceNormal(const SoPickedPoint * pick, bool ccw_face, Eigen::Vector3d& normal, int& shapeIdx);
 
     /**
-     * Helper function which can be used to determine a URDF link name from a picked path
+     * Helper function which can be used to find a specific node along the path which is formatted in
+     * a given way, such that a a number and a name can be extracted.
+     * The last such node found along the path is returned, along with the extracted number and string as paramter.
+     * \param sscanfStr input: the string to use in sscanf, which must extract *first* a number (int),
+     *      *then* a string for the name. This could be for example "_visual_%i_%s"
+     * \param str output: extracted string / name 
+     * \param num output: extracted number
+     * \param pathIdx output: index the link has in the path.
      */
-    static SoNode * getLinkDesc(const SoPath * path, std::string& linkName, int& visualNum);
+    static SoNode * getIntStr(const std::string& sscanfStr, const SoPath * path, std::string& str, int& num, int& pathIdx);
 
     SoQtExaminerViewer * getViewer()
     {

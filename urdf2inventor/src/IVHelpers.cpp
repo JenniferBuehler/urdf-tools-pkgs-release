@@ -1,22 +1,33 @@
 /**
-    Copyright (C) 2016 Jennifer Buehler
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software Foundation,
-    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-**/
-
-
+ * <ORGANIZATION> = Jennifer Buehler 
+ * <COPYRIGHT HOLDER> = Jennifer Buehler 
+ * 
+ * Copyright (c) 2016 Jennifer Buehler 
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the <ORGANIZATION> nor the
+ *       names of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ------------------------------------------------------------------------------
+ **/
 #include <urdf2inventor/Helpers.h>
 #include <urdf2inventor/IVHelpers.h>
 #include <Inventor/nodes/SoMatrixTransform.h>
@@ -29,10 +40,32 @@
 
 #include <Inventor/actions/SoWriteAction.h>
 #include <Inventor/actions/SoSearchAction.h>
+#include <Inventor/SbBox.h>
+#include <Inventor/actions/SoGetBoundingBoxAction.h>
 
 #include <boost/filesystem.hpp>
 
 #include <iostream>
+#include <sstream>
+
+
+void urdf2inventor::getBoundingBox(SoNode* node, Eigen::Vector3d& minPoint, Eigen::Vector3d& maxPoint)
+{
+    minPoint=Eigen::Vector3d(0,0,0);
+    maxPoint=Eigen::Vector3d(0,0,0);
+
+    // viewport required for any viewport-dependent 
+    // nodes (eg text), but not required for others
+    SbViewportRegion anyVP(0,0);  
+    SoGetBoundingBoxAction bbAction( anyVP );
+    bbAction.apply( node );
+    SbBox3f bbox = bbAction.getBoundingBox();
+    const SbVec3f& minIV = bbox.getMin();
+    const SbVec3f& maxIV = bbox.getMax();
+    minPoint=Eigen::Vector3d(minIV[0], minIV[1], minIV[2]);
+    maxPoint=Eigen::Vector3d(maxIV[0], maxIV[1], maxIV[2]);
+}
+
 
 bool urdf2inventor::writeInventorFileString(SoNode * node, std::string& result)
 {
@@ -92,12 +125,73 @@ std::set<std::string> urdf2inventor::getAllTexturePaths(SoNode * root)
     return allFiles;
 }
 
+std::string urdf2inventor::printMatrix(const urdf2inventor::EigenTransform& em)
+{
+    std::stringstream s;
+    s<< em(0,0)<<","<<em(0,1)<<","<<em(0,2)<<","<<em(0,3)<<","<<std::endl<<
+    em(1,0)<<","<<em(1,1)<<","<<em(1,2)<<","<<em(1,3)<<","<<std::endl<<
+    em(2,0)<<","<<em(2,1)<<","<<em(2,2)<<","<<em(2,3)<<","<<std::endl<<
+    em(3,0)<<","<<em(3,1)<<","<<em(3,2)<<","<<em(3,3)<<","<<std::endl;
+    return s.str();
+}
+
+urdf2inventor::EigenTransform urdf2inventor::getEigenTransform(const SbMatrix& m)
+{
+    Eigen::Matrix3d em;
+
+    // Matrix is transposed: SbMatrix m[i][j] is the value in column i and row j.
+    // Eigen: operator() (Index row, Index col) 
+    em(0,0)=m[0][0];
+    em(0,1)=m[1][0];
+    em(0,2)=m[2][0];
+    em(0,3)=m[3][0];
+    em(1,0)=m[0][1];
+    em(1,1)=m[1][1];
+    em(1,2)=m[2][1];
+    em(1,3)=m[3][1];
+    em(2,0)=m[0][2];
+    em(2,1)=m[1][2];
+    em(2,2)=m[2][2];
+    em(2,3)=m[3][2];
+    em(3,0)=m[0][3];
+    em(3,1)=m[1][3];
+    em(3,2)=m[2][3];
+    em(3,3)=m[3][3];
+    
+    return urdf2inventor::EigenTransform(em);
+}
+
+SbMatrix urdf2inventor::getSbMatrix(const urdf2inventor::EigenTransform& m)
+{
+    SbMatrix sm;
+    // Matrix is transposed: SbMatrix m[i][j] is the value in column i and row j.
+    // Eigen: operator() (Index row, Index col) 
+    sm[0][0]=m(0,0);
+    sm[0][1]=m(1,0);
+    sm[0][2]=m(2,0);
+    sm[0][3]=m(3,0);
+    sm[1][0]=m(0,1);
+    sm[1][1]=m(1,1);
+    sm[1][2]=m(2,1);
+    sm[1][3]=m(3,1);
+    sm[2][0]=m(0,2);
+    sm[2][1]=m(1,2);
+    sm[2][2]=m(2,2);
+    sm[2][3]=m(3,2);
+    sm[3][0]=m(0,3);
+    sm[3][1]=m(1,3);
+    sm[3][2]=m(2,3);
+    sm[3][3]=m(3,3);
+    return sm;
+}
 
 
-SoTransform * urdf2inventor::getTransform(const urdf2inventor::EigenTransform& eTrans)
+SoTransform * getSoTransform(const urdf2inventor::EigenTransform& eTrans)
 {
     SoTransform * transform = new SoTransform();
 
+    transform->setMatrix(urdf2inventor::getSbMatrix(eTrans));
+/*
     SoSFVec3f translation;
     translation.setValue(eTrans.translation().x(), eTrans.translation().y(), eTrans.translation().z());
     transform->translation = translation;
@@ -105,58 +199,66 @@ SoTransform * urdf2inventor::getTransform(const urdf2inventor::EigenTransform& e
     SoSFRotation rotation;
     Eigen::Quaterniond vQuat(eTrans.rotation());
     rotation.setValue(vQuat.x(), vQuat.y(), vQuat.z(), vQuat.w());
-    transform->rotation = rotation;
+    transform->rotation = rotation;*/
+
     return transform;
 }
 
-SoSeparator * urdf2inventor::addSubNode(SoNode * addAsChild,
-                                        SoNode* parent, const urdf2inventor::EigenTransform& eTrans)
+bool urdf2inventor::addSubNode(SoNode * addAsChild,
+                                        SoNode* parent, const urdf2inventor::EigenTransform& eTrans,
+                                        const char * name)
 {
-    SoTransform * transform = getTransform(eTrans);
-    return urdf2inventor::addSubNode(addAsChild, parent, transform);
+    SoTransform * transform = getSoTransform(eTrans);
+    return urdf2inventor::addSubNode(addAsChild, parent, transform, name);
 }
 
-SoSeparator * urdf2inventor::addSubNode(SoNode * addAsChild,
-                                        SoNode* parent, SoTransform * trans)
+bool urdf2inventor::addSubNode(SoNode * addAsChild,
+                                        SoNode* parent,
+                                        SoTransform * trans,
+                                        const char * transName)
 {
     SoSeparator * sep = dynamic_cast<SoSeparator*>(parent);
     if (!sep)
     {
         std::cerr << "parent is not a separator" << std::endl;
-        return NULL;
+        return false;
     }
 
     SoSeparator * sepChild = dynamic_cast<SoSeparator*>(addAsChild);
     if (!sepChild)
     {
         std::cerr << "child is not a separator" << std::endl;
-        return NULL;
+        return false;
     }
 
     // ROS_WARN_STREAM("######### Adding transform "<<trans->translation<<", "<<trans->rotation);
 
     SoSeparator * transNode = new SoSeparator();
+    if (transName) transNode->setName(transName);
     transNode->addChild(trans);
     transNode->addChild(sepChild);
 
     sep->addChild(transNode);
-    return sep;
+    return true;
 }
 
 
 void urdf2inventor::addSubNode(SoNode * addAsChild, SoSeparator * parent,
                                const EigenTransform& transform,
-                               SoMaterial * mat)
+                               SoMaterial * mat, const char * name)
 {
     SoMatrixTransform * trans = new SoMatrixTransform();
-    EigenTransform t = transform; //.inverse();
-    trans->matrix.setValue(t(0, 0), t(1, 0), t(2, 0), t(3, 0),
+    EigenTransform t = transform;
+    trans->matrix=getSbMatrix(t);
+/*    trans->matrix.setValue(t(0, 0), t(1, 0), t(2, 0), t(3, 0),
                            t(0, 1), t(1, 1), t(2, 1), t(3, 1),
                            t(0, 2), t(1, 2), t(2, 2), t(3, 2),
-                           t(0, 3), t(1, 3), t(2, 3), t(3, 3));
+                           t(0, 3), t(1, 3), t(2, 3), t(3, 3));*/
 
 
     SoSeparator * transSep = new SoSeparator();
+    if (name) transSep->setName(name);
+
     transSep->addChild(trans);
     transSep->addChild(addAsChild);
     if (mat) parent->addChild(mat);
@@ -195,10 +297,11 @@ void urdf2inventor::addSphere(SoSeparator * addToNode, const Eigen::Vector3d& po
     addSubNode(s, addToNode, trans, mat);
 }
 
-void urdf2inventor::addCylinder(SoSeparator * addToNode, const Eigen::Vector3d& pos,
-                                const Eigen::Quaterniond& rot,
+void urdf2inventor::addCylinder(SoSeparator * addToNode, 
+                                const urdf2inventor::EigenTransform& extraTrans,
                                 float radius, float height,
-                                float r, float g, float b, float a)
+                                float r, float g, float b, float a,
+                                const char * name)
 {
     SoCylinder * c = new SoCylinder();
     c->radius = radius;
@@ -227,14 +330,24 @@ void urdf2inventor::addCylinder(SoSeparator * addToNode, const Eigen::Vector3d& 
     // SoCylinder is oriented along y axis, so change this to z axis
     // and also translate such that it extends along +z
     Eigen::Quaterniond toZ = Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d(0, 1, 0), Eigen::Vector3d(0, 0, 1));
+    EigenTransform trans = extraTrans;
+    trans.translate(Eigen::Vector3d(0, 0, height / 2.0));
+    trans.rotate(toZ);
+
+    addSubNode(c, addToNode, trans, mat, name);
+}
+
+void urdf2inventor::addCylinder(SoSeparator * addToNode, const Eigen::Vector3d& pos,
+                                const Eigen::Quaterniond& rot,
+                                float radius, float height,
+                                float r, float g, float b, float a,
+                                const char * name)
+{
     EigenTransform trans;
     trans.setIdentity();
     trans.translate(pos);
     trans.rotate(rot);
-    trans.translate(Eigen::Vector3d(0, 0, height / 2.0));
-    trans.rotate(toZ);
-
-    addSubNode(c, addToNode, trans, mat);
+    addCylinder(addToNode, trans, radius, height, r, g, b, a, name);
 }
 
 void urdf2inventor::addLocalAxes(SoSeparator * addToNode, float axesRadius, float axesLength)
