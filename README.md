@@ -1,6 +1,9 @@
-# urdf_processing_tools
+# urdf_traverser
 
-A collection of tools to traverse, view and manipulate a URDF.
+Provides packages to traverse and modify a URDF model.
 
-See also [the wiki pages](https://github.com/JenniferBuehler/urdf-tools-pkgs/wiki).
+Note:
 
+Depending catkin packages CMakeLists.txt must:
+
+``add_definitions(${urdf_traverser_DEFINITIONS})``
