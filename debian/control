@@ -1,0 +1,12 @@
+Source: ros-indigo-urdf-traverser
+Section: misc
+Priority: extra
+Maintainer: Jennifer Buehler <jennifer.e.buehler@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-indigo-baselib-binding, ros-indigo-catkin, ros-indigo-eigen-conversions, ros-indigo-roscpp, ros-indigo-roslint, ros-indigo-urdf
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-indigo-urdf-traverser
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-indigo-baselib-binding, ros-indigo-eigen-conversions, ros-indigo-roscpp, ros-indigo-roslint, ros-indigo-urdf
+Description: Urdf traverser (C++) which provides functions to traverse the URDF and convenience functions to access the URDF model.
