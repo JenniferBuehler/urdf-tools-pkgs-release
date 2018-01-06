@@ -170,7 +170,8 @@ Urdf2Inventor::ConversionResultPtr Urdf2Inventor::postConvert(const ConversionPa
 }
 
 
-Urdf2Inventor::ConversionResultPtr Urdf2Inventor::convert(const ConversionParametersPtr& params)
+Urdf2Inventor::ConversionResultPtr Urdf2Inventor::convert(const ConversionParametersPtr& params,
+                                                          const MeshConvertRecursionParamsPtr& meshParams)
 {
     ConversionResultPtr res = preConvert(params);
     if (!res.get())
@@ -187,8 +188,8 @@ Urdf2Inventor::ConversionResultPtr Urdf2Inventor::convert(const ConversionParame
 
     ROS_INFO_STREAM("############### Converting meshes"); //, base dir " << params->baseDir);
 
-    std::map<std::string, std::set<std::string> > textureFiles;
-    if (!urdf2inventor::convertMeshes(*urdf_traverser, params->rootLinkName,
+/*    std::map<std::string, std::set<std::string> > textureFiles;
+    if (!urdf2inventor::convertMeshesSimple(*urdf_traverser, params->rootLinkName,
                                       scaleFactor,
                                       params->material,
                                       OUTPUT_EXTENSION,
@@ -198,11 +199,27 @@ Urdf2Inventor::ConversionResultPtr Urdf2Inventor::convert(const ConversionParame
         ROS_ERROR("Could not convert meshes");
         return res;
     }
+    */
+    MeshConvertRecursionParamsPtr mParams=meshParams;
+    if (!mParams)
+    {
+        mParams.reset(new MeshConvertRecursionParamsT(scaleFactor, params->material,
+                                        OUTPUT_EXTENSION, params->addVisualTransform));
+    }
+
+    if (!urdf2inventor::convertMeshes<MeshFormat>(*urdf_traverser, params->rootLinkName, mParams))
+    {
+        ROS_ERROR("Could not convert meshes");
+        return res;
+    }
+
+    res->meshes = mParams->resultMeshes;
 
     if (!urdf2inventor::fixTextureReferences(
                 res->meshOutputDirectoryName,
                 res->texOutputDirectoryName,
-                textureFiles,
+                mParams->textureFiles,
+                //textureFiles,
                 res->meshes, res->textureFiles))
     {
         ROS_ERROR("Could not fix texture references");
@@ -334,8 +351,10 @@ void Urdf2Inventor::addLocalAxes(const LinkConstPtr& link, SoSeparator * addToNo
     }
     urdf2inventor::addLocalAxes(addToNode, rad, h);
 
+    // add the rotation axis as well:
     Eigen::Vector3d rotAxis(0, 0, 1);
-    if (link->parent_joint) rotAxis = urdf_traverser::getRotationAxis(link->parent_joint);
+    if (link->parent_joint)
+      rotAxis = urdf_traverser::getRotationAxis(link->parent_joint);
     Eigen::Vector3d z(0, 0, 1);
     Eigen::Quaterniond q;
     q.setIdentity();
@@ -355,10 +374,14 @@ SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFac
         ROS_ERROR("getAsInventor: from_link is NULL");
         return NULL;
     }
+    
+    bool useVisuals = true; // XXX TODO: Parameterize
+
     // ROS_INFO_STREAM("Get all visuals of "<<from_link->name);//<<" (parent joint "<<from_link->parent_joint->name<<")");
-    SoNode * allVisuals = getAllVisuals(from_link,
+    SoNode * allVisuals = getAllGeometry(from_link,
                                         useScaleFactor ? scaleFactor : 1.0,
                                         addVisualTransform,
+                                        useVisuals,
                                         useScaleFactor);
     if (!allVisuals)
     {
@@ -382,6 +405,7 @@ SoNode * Urdf2Inventor::getAsInventor(const LinkPtr& from_link, bool useScaleFac
         }
         else
         {
+            // ROS_INFO_STREAM("Adding local axes for "<<from_link->name);
             addLocalAxes(from_link, _allVisuals, useScaleFactor, _axesRadius, _axesLength);
         }
     }
@@ -443,7 +467,8 @@ SoNode * Urdf2Inventor::getAsInventor(const std::string& fromLink, bool useScale
 
 bool Urdf2Inventor::writeAsInventor(const std::string& ivFilename,
                                     const std::string& fromLink,
-                                    bool useScaleFactor, const EigenTransform& addVisualTransform)
+                                    bool useScaleFactor, const EigenTransform& addVisualTransform,
+                                    bool _addAxes, float _axesRadius, float _axesLength)
 {
     std::string startLinkName = fromLink;
     if (startLinkName.empty())
@@ -459,16 +484,17 @@ bool Urdf2Inventor::writeAsInventor(const std::string& ivFilename,
     }
 
     ROS_INFO_STREAM("Writing from link '" << startLinkName << "' to file " << ivFilename);
-    return writeAsInventor(ivFilename, startLink, useScaleFactor, addVisualTransform);
+    return writeAsInventor(ivFilename, startLink, useScaleFactor, addVisualTransform, _addAxes, _axesRadius, _axesLength);
 }
 
 bool Urdf2Inventor::writeAsInventor(const std::string& ivFilename, const LinkPtr& from_link,
-                                    bool useScaleFactor, const EigenTransform& addVisualTransform)
+                                    bool useScaleFactor, const EigenTransform& addVisualTransform,
+                                    bool _addAxes, float _axesRadius, float _axesLength)
 {
     ROS_INFO("Converting model...");
 
     std::set<std::string> textureFiles;
-    SoNode * inv = getAsInventor(from_link, useScaleFactor, addAxes, axesRadius, axesLength,
+    SoNode * inv = getAsInventor(from_link, useScaleFactor, _addAxes, _axesRadius, _axesLength,
                                  addVisualTransform, &textureFiles);
     if (!inv)
     {

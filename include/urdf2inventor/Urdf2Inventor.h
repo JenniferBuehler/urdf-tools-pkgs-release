@@ -1,10 +1,10 @@
 /**
- * <ORGANIZATION> = Jennifer Buehler 
- * <COPYRIGHT HOLDER> = Jennifer Buehler 
- * 
- * Copyright (c) 2016 Jennifer Buehler 
+ * <ORGANIZATION> = Jennifer Buehler
+ * <COPYRIGHT HOLDER> = Jennifer Buehler
+ *
+ * Copyright (c) 2016 Jennifer Buehler
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
@@ -15,7 +15,7 @@
  *     * Neither the name of the <ORGANIZATION> nor the
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -33,7 +33,12 @@
 // Copyright Jennifer Buehler
 
 //-----------------------------------------------------
+#include <urdf2inventor/ConversionResult.h>
+#include <urdf2inventor/MeshConvertRecursionParams.h>
+
 #include <urdf_traverser/UrdfTraverser.h>
+
+#include <baselib_binding/SharedPtr.h>
 
 #include <iostream>
 #include <string>
@@ -45,8 +50,6 @@
 
 #include <Inventor/nodes/SoSeparator.h>
 
-#include <baselib_binding/SharedPtr.h>
-#include <urdf2inventor/ConversionResult.h>
 
 namespace urdf2inventor
 {
@@ -65,6 +68,9 @@ public:
     typedef ConversionResult<MeshFormat> ConversionResultT;
     typedef baselib_binding::shared_ptr<ConversionResultT>::type ConversionResultPtr;
     typedef baselib_binding::shared_ptr<ConversionParameters>::type ConversionParametersPtr;
+
+    typedef MeshConvertRecursionParams<MeshFormat> MeshConvertRecursionParamsT;
+    typedef baselib_binding::shared_ptr<MeshConvertRecursionParamsT>::type MeshConvertRecursionParamsPtr;
 
     typedef baselib_binding::shared_ptr<urdf_traverser::UrdfTraverser>::type UrdfTraverserPtr;
     typedef baselib_binding::shared_ptr<const urdf_traverser::UrdfTraverser>::type UrdfTraverserConstPtr;
@@ -87,24 +93,17 @@ public:
     static std::string TEX_OUTPUT_DIRECTORY_NAME;
 
     /**
-     * \param traverser the URDF traverser. Does not need to have a loaded URDF, as method loadAndConvert() will load the URDF into it.
-     * \param _scaleFactor the graspit model might have to be scaled (the urdf model is in meters, graspit! in millimeters).
-     * This can be specified with this scale factor.
-     * \param _addAxes default value: add the local coordinate system axes of the links to the inventor nodes.
-     *      z axis is displayed blue, y axis green, x axis red, and the rotation axis pink.
-     *      Fixed joints axes will be artificially altered to be slightly longer and thinner, so a distinction is
-     *      visible.
-     * \param _axesRadius default value: radius of the axes, if \e _addAxes is true
-     * \param _axesLength default value: length of the axes, if \e _addAxes is true
+     * \param traverser the URDF traverser.
+     *    Does not need to have a loaded URDF, as method loadAndConvert()
+     *    will load the URDF into it.
+     * \param _scaleFactor the graspit model might have to be scaled (the urdf model is
+     *    in meters, graspit! in millimeters). This can be specified with this scale factor.
      */
     explicit Urdf2Inventor(const UrdfTraverserPtr& traverser,
-                           float _scaleFactor = 1, bool _addAxes = false, float _axesRadius = 0.003, float _axesLength = 0.015):
+                           float _scaleFactor = 1):
         urdf_traverser(traverser),
         scaleFactor(_scaleFactor),
-        isScaled(false),
-        addAxes(_addAxes),
-        axesRadius(_axesRadius),
-        axesLength(_axesLength)
+        isScaled(false)
     {
         assert(urdf_traverser.get());
     }
@@ -169,9 +168,17 @@ public:
      *      transform (their "origin"). This can be used to correct transformation errors which may have been
      *      introduced in converting meshes from one format to the other, losing orientation information
      *      (for example, .dae has an "up vector" definition which may have been ignored)
+     * \param _addAxes default value: add the local coordinate system axes of the links to the inventor nodes.
+     *      z axis is displayed blue, y axis green, x axis red, and the rotation axis pink.
+     *      Fixed joints axes will be artificially altered to be slightly longer and thinner, so a distinction is
+     *      visible.
+     * \param _axesRadius default value: radius of the axes, if \e _addAxes is true
+     * \param _axesLength default value: length of the axes, if \e _addAxes is true
+
      */
     bool writeAsInventor(const std::string& outputFilename,  const std::string& fromLink /*= ""*/,
-                         bool useScaleFactor /*= true*/, const EigenTransform& addVisualTransform);
+                         bool useScaleFactor /*= true*/, const EigenTransform& addVisualTransform,
+                         bool _addAxes = false, float _axesRadius = 0.003, float _axesLength = 0.015);
 
     /**
      * Loads the URDF file into the UrdfTraverser (instance passed into the constructor),
@@ -210,8 +217,11 @@ public:
      * To save an inventor file of the *whole* robot, use writeAsInventor() instead.
      *
      * \param params parameters of the conversion
+     * \param meshParams optional: pre-instantiated MeshConvertRecursionParams. Can be
+     *   left null and then default is constructed.
      */
-    virtual ConversionResultPtr convert(const ConversionParametersPtr& params);
+    virtual ConversionResultPtr convert(const ConversionParametersPtr& params,
+                                        const MeshConvertRecursionParamsPtr& meshParams=MeshConvertRecursionParamsPtr());
 
     /**
      * Prints the structure of the URDF to standard out
@@ -310,7 +320,8 @@ private:
      * \param outFilename has to be an inventor filename
      */
     bool writeAsInventor(const std::string& outFilename, const LinkPtr& from_link,
-                         bool useScaleFactor /*= true*/, const EigenTransform& addTransform);
+                         bool useScaleFactor /*= true*/, const EigenTransform& addTransform,
+                         bool _addAxes = false, float _axesRadius = 0.003, float _axesLength = 0.015);
 
 
     UrdfTraverserPtr urdf_traverser;
@@ -318,10 +329,6 @@ private:
     // The graspit model might ahve to be scaled compared to the urdf model, this is the scale factor which does that.
     float scaleFactor;
     bool isScaled;
-
-    bool addAxes;
-    float axesRadius;
-    float axesLength;
 };
 
 }  //  namespace urdf2inventor
