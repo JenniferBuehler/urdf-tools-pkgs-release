@@ -2,6 +2,11 @@
 Changelog for package urdf_viewer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.2 (2018-01-06)
+------------------
+* Some tidy up
+* Contributors: Jennifer Buehler
+
 1.0.1 (2016-08-06)
 ------------------
 * Changed to BSD 3-clause license

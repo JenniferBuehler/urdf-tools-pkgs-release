@@ -30,6 +30,7 @@
  **/
 #include <ros/ros.h>
 #include <urdf_traverser/Functions.h>
+#include <urdf_traverser/Helpers.h>
 
 
 bool urdf_traverser::isActive(const JointPtr& joint)
@@ -126,11 +127,13 @@ void urdf_traverser::setTransform(const EigenTransform& t, JointPtr& joint)
 
 urdf_traverser::EigenTransform urdf_traverser::getTransform(const JointConstPtr& joint)
 {
+    assert(joint);
     return getTransform(joint->parent_to_joint_origin_transform);
 }
 
 urdf_traverser::EigenTransform urdf_traverser::getTransform(const LinkConstPtr& link)
 {
+    assert(link);
     return getTransform(link->parent_joint);
 }
 
@@ -157,6 +160,8 @@ urdf_traverser::EigenTransform urdf_traverser::getTransform(const urdf::Pose& p)
 
 Eigen::Matrix4d urdf_traverser::getTransformMatrix(const LinkConstPtr& from_link,  const LinkConstPtr& to_link)
 {
+    assert(from_link);
+    assert(to_link);
     if (from_link->name == to_link->name) return Eigen::Matrix4d::Identity();
 
     std::vector<JointPtr> pjoints = getChain(from_link, to_link);
@@ -191,16 +196,20 @@ bool urdf_traverser::applyTransform(JointPtr& joint, const EigenTransform& trans
 void urdf_traverser::applyTransform(LinkPtr& link, const EigenTransform& trans, bool preMult)
 {
     // ROS_INFO("applying transform to link %s",link->name.c_str());
+    assert(link);
 
     for (std::vector<VisualPtr >::iterator vit = link->visual_array.begin();
             vit != link->visual_array.end(); ++vit)
     {
         VisualPtr visual = *vit;
-        EigenTransform vTrans = getTransform(visual->origin);
-        // ROS_INFO_STREAM("a visual for link"<<link->name<<" with transform "<<vTrans);
-        if (preMult) vTrans = trans * vTrans;
-        else vTrans = vTrans * trans;
-        setTransform(vTrans, visual->origin);
+        if (visual)
+        {
+          EigenTransform vTrans = getTransform(visual->origin);
+          // ROS_INFO_STREAM("a visual for link"<<link->name<<" with transform "<<vTrans);
+          if (preMult) vTrans = trans * vTrans;
+          else vTrans = vTrans * trans;
+          setTransform(vTrans, visual->origin);
+        }
     }
 
 
@@ -208,20 +217,29 @@ void urdf_traverser::applyTransform(LinkPtr& link, const EigenTransform& trans, 
             cit != link->collision_array.end(); ++cit)
     {
         CollisionPtr coll = *cit;
-        EigenTransform vTrans = getTransform(coll->origin);
-        if (preMult) vTrans = trans * vTrans;
-        else vTrans = vTrans * trans;
-        setTransform(vTrans, coll->origin);
+        if (coll)
+        {
+          EigenTransform vTrans = getTransform(coll->origin);
+          if (preMult) vTrans = trans * vTrans;
+          else vTrans = vTrans * trans;
+          setTransform(vTrans, coll->origin);
+        }
     }
 
-    EigenTransform vTrans = getTransform(link->inertial->origin);
-    if (preMult) vTrans = trans * vTrans;
-    else vTrans = vTrans * trans;
-    setTransform(vTrans, link->inertial->origin);
+    if (link->inertial)
+    {
+      EigenTransform vTrans = getTransform(link->inertial->origin);
+      if (preMult) vTrans = trans * vTrans;
+      else vTrans = vTrans * trans;
+      setTransform(vTrans, link->inertial->origin);
+    }
 }
 
-std::vector<urdf_traverser::JointPtr> urdf_traverser::getChain(const LinkConstPtr& from_link, const LinkConstPtr& to_link)
+std::vector<urdf_traverser::JointPtr>
+urdf_traverser::getChain(const LinkConstPtr& from_link, const LinkConstPtr& to_link)
 {
+    assert(from_link);
+    assert(to_link);
     std::vector<JointPtr> chain;
 
     if (to_link->name == from_link->name) return chain;
@@ -294,11 +312,13 @@ bool urdf_traverser::jointTransformForAxis(const JointConstPtr& joint,
     Eigen::Vector3d rotAxis(joint->axis.x, joint->axis.y, joint->axis.z);
     if (rotAxis.norm() < 1e-06) return false;
     rotAxis.normalize();
-    // ROS_INFO_STREAM("Rotation axis for joint "<<joint.name<<": "<<rotAxis);
+    // ROS_INFO_STREAM("Rotation axis for joint "<<joint->name<<": "<<rotAxis);
     if (equalAxes(rotAxis, axis, 1e-06)) return false;
 
-    rotation = Eigen::Quaterniond::FromTwoVectors(rotAxis, axis);
-    // ROS_WARN_STREAM("z alignment: "<<rotation);
+    //rotation = Eigen::Quaterniond::FromTwoVectors(rotAxis, axis);
+    //ROS_WARN_STREAM("z alignment from "<<rotAxis<<" to "<<axis<<" : "<<rotation);
+    rotation = Eigen::Quaterniond::FromTwoVectors(axis, rotAxis);
+    // ROS_WARN_STREAM("z alignment from "<<axis<<" to "<<rotAxis<<" : "<<rotation);
     return true;
 }
 
