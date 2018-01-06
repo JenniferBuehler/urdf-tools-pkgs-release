@@ -1,3 +1,31 @@
+## urdf_tools (indigo) - 1.0.2-0
+
+The packages in the `urdf_tools` repository were released into the `indigo` distro by running `/usr/bin/bloom-release urdf_tools --track indigo --rosdistro indigo` on `Sat, 06 Jan 2018 13:40:17 -0000`
+
+These packages were released:
+- `urdf2inventor`
+- `urdf_processing_tools`
+- `urdf_transform`
+- `urdf_traverser`
+- `urdf_viewer`
+
+Version of package(s) in repository `urdf_tools`:
+
+- upstream repository: https://github.com/JenniferBuehler/urdf-tools-pkgs.git
+- release repository: https://github.com/JenniferBuehler/urdf-tools-pkgs-release.git
+- rosdistro version: `1.0.1-0`
+- old version: `1.0.1-0`
+- new version: `1.0.2-0`
+
+Versions of tools used:
+
+- bloom version: `0.6.1`
+- catkin_pkg version: `0.3.9`
+- rosdep version: `0.11.8`
+- rosdistro version: `0.6.3`
+- vcstools version: `0.1.39`
+
+
 ## urdf_tools (indigo) - 1.0.1-0
 
 The packages in the `urdf_tools` repository were released into the `indigo` distro by running `/usr/bin/bloom-release urdf_tools --track indigo --rosdistro indigo` on `Sat, 06 Aug 2016 15:29:52 -0000`
