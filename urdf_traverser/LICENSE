@@ -1,10 +1,5 @@
 This package is available for use under the following license, commonly known
-as the 3-clause (or "modified") BSD license, with the exception of 
-the following files which are a re-distribution of GPL code:
-
-- urdf2inventor/include/urdf2inventor/AssimpImport.h
-- urdf2inventor/src/AssimpImport.cpp
-
+as the 3-clause (or "modified") BSD license:
 ------------------------------------------------------------------------------
 <ORGANIZATION> = Jennifer Buehler 
 <COPYRIGHT HOLDER> = Jennifer Buehler 
